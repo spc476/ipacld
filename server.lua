@@ -35,15 +35,12 @@ while true do
     cred.gid = unix.groups[cred.gid].name
   end
   
-  print("remote",remote)
-  print(
-  	"cred",
-  	string.format(
-  		"pid=%d uid=%s gid=%s",
-  		cred.pid,
-  		cred.uid,
-  		cred.gid
-  	)
-  )
+  print(string.format("cred remote=%q pid=%d uid=%s gid=%s",
+  	remote.addr,
+  	cred.pid,
+  	cred.uid,
+  	cred.gid
+  ))
+  
 end
 
