@@ -1,3 +1,4 @@
+#!/usr/bin/env lua
 
 net = require "org.conman.net"
 
