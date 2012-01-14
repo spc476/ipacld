@@ -1,12 +1,16 @@
+#!/usr/local/bin/lua
 
 net   = require "org.conman.net"
 fsys  = require "org.conman.fsys"
 unix  = require "org.conman.unix"
 errno = require "org.conman.errno"
+sig   = require "org.conman.process".sig
         require "readacl"
 
+sig.catch(sig.INT)
 fsys.umask("--x--x--x")
 
+os.remove("/tmp/acl")
 laddr = net.address("/tmp/acl")
 sock  = net.socket(laddr.family,'udp')
 sock:bind(laddr)
@@ -17,7 +21,9 @@ while true do
   remote,data,cred,err = readcred(sock)
   
   if err ~= 0 then
-    print("readcred()",errno.strerror(err))
+    print("readcred()",errno.strerror(err))    
+    sock:close()
+    os.remove("/tmp/acl")
     os.exit(1)
   end
   
