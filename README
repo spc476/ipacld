@@ -16,9 +16,52 @@ Known limitations at this point:
 	* only TCP, UDP and RAW sockets created
 	* only Lua bindings are available (yes, you'll have to check the
 	  source if you want C bindings)
+	* the existing Lua bindings are still pretty raw
 	* only runs in the foreground (but there's a reason for this)
 
 This is more of a proof-of-concept at this stage, but it work, and I'm
 surprised that nothing like this hasn't already been written.  What an odd
 omission.
+
+Anyway, to save a bit of time, here's a sample configuration:
+
+TCP = 
+{
+  ['0.0.0.0:70']        = { spc = true , gopher = true } ,
+  ['fc00::1:70']        = { spc = true , gopher = true } ,
+  ['0.0.0.0:80']	= { spc = true , apache = true } ,
+  ['0.0.0.0:finger']	= { spc = true , nobody = true } ,
+  ['192.168.1.10:qotd']	= { spc = true } ,
+  ['0.0.0.0:postgreq']  = {
+	spc = function(group)
+		if group ~= 4 then return false end
+
+		local function between(low,here,high)
+		  if (here < low)  then return false end
+		  if (here > high) then return false end
+		  return true
+		end
+
+		local now = os.date("*t",os.time())
+
+		if not between(2,now.wday,6) then return false end
+
+		if not between( 9,now.hour,16) then return false end
+		if     between(12,now.hour,13) then return false end
+		
+		return true
+	      end
+	}
+}
+
+UDP =
+{
+  ['192.168.1.10:qotd'] = { spc = true },
+}
+
+RAW = 
+{
+  ['192.168.1.10:ospf'] = { ospf = true , spc = true },
+  ['0.0.0.0:254'] 	= { spc  = true }
+}
 
