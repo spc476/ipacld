@@ -12,7 +12,7 @@ fsys.umask("--x--x--x")
 
 lname = string.format("/tmp/ipacl-request.%d",proc.PID)
 
-raddr = net.address("/tmp/ipacl")
+raddr = net.address("/dev/ipacl")
 laddr = net.address(lname)
 sock  = net.socket(laddr.family,'udp')
 sock:bind(laddr)

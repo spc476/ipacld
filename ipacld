@@ -108,7 +108,7 @@ function main()
   if err ~= 0 then
     if err == errno.EINTR then
       g_sock:close()
-      os.remove("/tmp/ipacl")
+      os.remove("/dev/ipacl")
       os.exit(1)
     end
     syslog('crit',string.format("readcred() = %s",errno.strerror(err)))
@@ -208,14 +208,16 @@ g_acl.tcp = adjust_keys(TCP,'tcp')
 g_acl.udp = adjust_keys(UDP,'udp')
 g_acl.raw = adjust_keys(RAW,'raw')
 
+--[[
 dump_addr(g_acl.tcp,'tcp')
 dump_addr(g_acl.udp,'udp')
 dump_addr(g_acl.raw,'raw')
+--]]
 
 sig.catch(sig.INT)
 fsys.umask("--x--x--x")
-os.remove("/tmp/ipacl")
-laddr = net.address("/tmp/ipacl")
+os.remove("/dev/ipacl")
+laddr = net.address("/dev/ipacl")
 g_sock  = net.socket(laddr.family,'udp')
 g_sock:bind(laddr)
 recvcred(g_sock)
