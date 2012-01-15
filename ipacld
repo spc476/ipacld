@@ -10,62 +10,16 @@ proc   = require "org.conman.process"
 sig    = require "org.conman.process".sig
          require "readacl"
 
-dofile("ipacl.conf")
-
 syslog.open('ipacld','daemon')
 syslog('notice',"ipacld starting up")
+dofile("ipacl.conf")
+
 local g_null = fsys.open("/dev/null","rw")
 local g_sock
 local g_acl = {}
 
 -- *********************************************************************
 
-function adjust_keys(tab,stype)
-  local results = {}
-  
-  if tab == nil then
-    return results
-  end
-  
-  local function check_users(addr,list)
-    local res = {}
-    
-    for name,value in pairs(list) do
-      if unix.users[name] == nil then
-        syslog('warn',string.format("%s:%s: user %q does not exist",stype,addr,name))
-      else
-        if type(value) == 'boolean' or type(value) == 'function' then
-          res[name] = value
-        else
-          syslog('warn',string.format("%s:%s: user %q should be boolean or function",stype,addr,name))
-        end
-      end
-    end
-    
-    return res
-  end
-
-  for name,value in pairs(tab) do
-    local a,p = name:match("^(.*)%:([^%:]+)$")
-
-    if a ~= nil and p ~= nil then
-      local addr,err = net.address(a,p,stype)
-      if err ~= 0 then
-        syslog('warn',string.format("bad address: %q",name))
-      else
-        local key = string.format("%s:%d",addr.addr,addr.port)
-        results[key] = check_users(key,value)
-      end
-    else
-      syslog('warn',string.format("bad address: %q",name))
-    end
-  end
-        
-  return results
-end
-
--- *********************************************************************
-      
 function log_success(remote,cred,addr,stype)
   syslog('notice',string.format("success: rem=%s uid=%s gid=%s family=%s addr=%s port=%s type=%s",
   		tostring(remote),
@@ -137,14 +91,22 @@ function main()
     return main()
   end
 
-  key = string.format("%s:%s",addr.addr,addr.port)
+  -- ------------------------------
+  -- get the TCP, UDP or RAW table
+  -- ------------------------------
+
   val = g_acl[stype]
   if val == nil then
     log_failure(remote,cred,addr,stype,errno.EINVAL)
     sendfd(g_sock,remote,g_null:fd(),errno.EINVAL)
     return main()
   end
-  
+
+  -- ----------------------
+  -- get the address table
+  -- ----------------------
+
+  key = string.format("%s:%s",addr.addr,addr.port)  
   val = val[key]
   if val == nil then
     log_failure(remote,cred,addr,stype,errno.EPERM)
@@ -152,6 +114,10 @@ function main()
     return main()
   end
   
+  -- -----------------------------------
+  -- get if the user can open this port
+  -- -----------------------------------
+
   val = val[cred.uid]
   if val == nil then
     log_failure(remote,cred,addr,stype,errno.EPERM)
@@ -159,6 +125,11 @@ function main()
     return main()
   end
   
+  -- -------------------------------------------------------------------
+  -- if this is a function, run it, passing the group value.  This had
+  -- better return a bool
+  -- -------------------------------------------------------------------
+
   if type(val) == 'function' then 
     val = val(cred.gid) 
   end
@@ -168,6 +139,10 @@ function main()
     sendfd(g_sock,remote,g_null:fd(),errno.EPERM)
     return main()
   end
+
+  -- ------------------------------------------
+  -- create the requested socket and return it
+  -- ------------------------------------------
 
   sock,err = net.socket(addr.family,stype)
   if err ~= 0 then
@@ -192,27 +167,12 @@ end
 
 -- *************************************************************************  
 
-function dump_addr(tab,stype)
-  for name,users in pairs(tab) do
-    local x = ""
-    for user in pairs(users) do
-      x = x .. " " .. user
-    end
-    print(string.format("%s:%s %s",stype,name,x))
-  end
-end
-
--- *************************************************************************
-
-g_acl.tcp = adjust_keys(TCP,'tcp')
-g_acl.udp = adjust_keys(UDP,'udp')
-g_acl.raw = adjust_keys(RAW,'raw')
-
---[[
-dump_addr(g_acl.tcp,'tcp')
-dump_addr(g_acl.udp,'udp')
-dump_addr(g_acl.raw,'raw')
---]]
+g_acl = 
+{
+  tcp = TCP,
+  udp = UDP,
+  raw = RAW
+}
 
 sig.catch(sig.INT)
 fsys.umask("--x--x--x")
