@@ -38,7 +38,6 @@ typedef enum aclfamily
 {
   ACLF_IPv4,
   ACLF_IPv6,
-  ACLF_UNIX
 } aclfamily__t;
 
 typedef enum acltype
@@ -154,13 +153,6 @@ static int socklua_acl_encode(lua_State *const L)
          memcpy(raw.ipv6.addr,addr->sin6.sin6_addr.s6_addr,16);
          break;
          
-    case AF_UNIX:
-         size            = sizeof(aclraw_head__t) + sizeof(addr->ssun.sun_path);
-         raw.unix.family = ACLF_UNIX;
-         raw.unix.type   = type;
-         memcpy(raw.unix.addr,addr->ssun.sun_path,sizeof(addr->ssun.sun_path));
-         break;
-         
     default:
          assert(0);
          lua_pushnil(L);
@@ -219,22 +211,6 @@ static int socklua_acl_decode(lua_State *const L)
          addr->sa.sa_family   = AF_INET6;
          addr->sin6.sin6_port = raw->ipv6.port;
          memcpy(addr->sin6.sin6_addr.s6_addr,raw->ipv6.addr,16);
-         break;
-         
-    case ACLF_UNIX:
-         if (
-                 (size < sizeof(aclraw_head__t))
-              || (size > (sizeof(aclraw_head__t) + sizeof(addr->ssun.sun_path)))
-            )
-         {
-           lua_pushnil(L);
-           lua_pushnil(L);
-           lua_pushinteger(L,EPROTO);
-           return 3;
-         }
-         
-         addr->sa.sa_family = AF_UNIX;
-         memcpy(addr->ssun.sun_path,raw->unix.addr,size - sizeof(aclraw_head__t));
          break;
          
     default:

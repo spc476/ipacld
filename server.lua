@@ -46,20 +46,21 @@ function adjust_keys(tab,stype)
   end
 
   for name,value in pairs(tab) do
-    local spec = str.split(name,"%:")
-    if #spec == 2 then
-      local addr,err = net.address(spec[1],spec[2],stype)
+    local a,p = name:match("^(.*)%:([^%:]+)$")
+
+    if a ~= nil and p ~= nil then
+      local addr,err = net.address(a,p,stype)
       if err ~= 0 then
-        syslog('crit',string.format("bad address: %s",name))
-        os.exit(1)
+        syslog('warn',string.format("bad address: %q",name))
+      else
+        local key = string.format("%s:%d",addr.addr,addr.port)
+        results[key] = check_users(key,value)
       end
-      local key = string.format("%s:%d",addr.addr,addr.port)
-      results[key] = check_users(name,value)
     else
-      results[name] = check_users(name,value)
+      syslog('warn',string.format("bad address: %q",name))
     end
   end
-  
+        
   return results
 end
 

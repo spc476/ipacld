@@ -21,11 +21,9 @@ list =
 {
   { net.address("192.168.1.10"	, 70 , "tcp")	, 'tcp' } ,
   { net.address("fc00::1"	, 70 , "tcp")	, 'tcp' } ,
-  { net.address("/tmp/blah")			, 'tcp' }
 --[[
   { net.address("192.168.1.10"	, 70 , "udp")	, 'udp' } ,
   { net.address("fc00::1"	, 70 , "udp")	, 'udp' } ,
-  { net.address("/tmp/blah")			, 'udp' } ,
   
   { net.address("192.168.1.10"	, 17 , "raw")	, 'raw' } ,
 --]]
