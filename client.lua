@@ -10,9 +10,9 @@ net   = require "org.conman.net"
 proc.sig.catch(proc.sig.INT)
 fsys.umask("--x--x--x")
 
-lname = string.format("/tmp/acl-request.%d",proc.PID)
+lname = string.format("/tmp/ipacl-request.%d",proc.PID)
 
-raddr = net.address("/tmp/acl")
+raddr = net.address("/tmp/ipacl")
 laddr = net.address(lname)
 sock  = net.socket(laddr.family,'udp')
 sock:bind(laddr)
@@ -21,14 +21,10 @@ list =
 {
   { net.address("192.168.1.10"	, 70 , "tcp")	, 'tcp' } ,
   { net.address("fc00::1"	, 70 , "tcp")	, 'tcp' } ,
---[[
   { net.address("192.168.1.10"	, 70 , "udp")	, 'udp' } ,
-  { net.address("fc00::1"	, 70 , "udp")	, 'udp' } ,
-  
+  { net.address("fc00::1"	, 70 , "udp")	, 'udp' } ,  
   { net.address("192.168.1.10"	, 17 , "raw")	, 'raw' } ,
---]]
 }
-
 
 i       = math.random(#list)
 print(list[i][1],list[i][2])
