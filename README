@@ -1,0 +1,24 @@
+IP ACL Daemon.
+
+This daemon reads the configuration file (defaults to ipacl.conf in the
+current working directory; you can specify a configuration file on the 
+command line) specifying which users can bind to which IP (or IPv6) ports.
+
+It then listens for datagrams on /dev/ipacl.  When it receives one, it
+checks the credentials of the sending process, and if allowed, will create
+and bind to the requested IP port and send it to the requesting process.
+
+Known limitations at this point:
+
+	* only IP addresses allowed
+	* only users can be specified, no groups
+	* only IP and IPv6 addresses allowed.
+	* only TCP, UDP and RAW sockets created
+	* only Lua bindings are available (yes, you'll have to check the
+	  source if you want C bindings)
+	* only runs in the foreground (but there's a reason for this)
+
+This is more of a proof-of-concept at this stage, but it work, and I'm
+surprised that nothing like this hasn't already been written.  What an odd
+omission.
+
