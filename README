@@ -17,11 +17,16 @@ Known limitations at this point:
 	* only Lua bindings are available (yes, you'll have to check the
 	  source if you want C bindings)
 	* the existing Lua bindings are still pretty raw
+	* only Lua 5.1 is supported
 	* only runs in the foreground (but there's a reason for this)
 
 This is more of a proof-of-concept at this stage, but it work, and I'm
 surprised that nothing like this hasn't already been written.  What an odd
 omission.
+
+You'll need to install the Conman Lua packages, available at
+
+	https://github.com/spc476/lua-conmanorg
 
 Anyway, to save a bit of time, here's a sample configuration:
 
