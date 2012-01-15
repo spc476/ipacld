@@ -160,7 +160,7 @@ function main()
   end
   
   if type(val) == 'function' then 
-    val = val() 
+    val = val(cred.gid) 
   end
   
   if not val then
