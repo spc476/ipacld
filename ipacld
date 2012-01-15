@@ -12,7 +12,12 @@ sig    = require "org.conman.process".sig
 
 syslog.open('ipacld','daemon')
 syslog('notice',"ipacld starting up")
-dofile("ipacl.conf")
+
+if arg[1] == nil then
+  dofile("ipacl.conf")
+else
+  dofile(arg[1])
+end
 
 local g_null = fsys.open("/dev/null","rw")
 local g_sock
