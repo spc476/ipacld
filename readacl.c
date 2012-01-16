@@ -543,6 +543,15 @@ static int socklua_readfd(lua_State *const L)
     return 3;
   }
   
+  rep = (aclrep__t *)buffer;
+  if (rep->err != 0)
+  {
+    lua_pushnil(L);
+    lua_pushnil(L);
+    lua_pushinteger(L,err);
+    return 3;
+  }
+  
   cmsg = CMSG_FIRSTHDR(&msg);
   
   if (
@@ -572,9 +581,8 @@ static int socklua_readfd(lua_State *const L)
     return 3;
   }
   
-  rep = (aclrep__t *)buffer;  
   lua_pushinteger(L,fh);
-  lua_pushinteger(L,rep->err);
+  lua_pushinteger(L,0);
   return 3;
 }
 
