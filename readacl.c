@@ -548,7 +548,7 @@ static int socklua_readfd(lua_State *const L)
   {
     lua_pushnil(L);
     lua_pushnil(L);
-    lua_pushinteger(L,err);
+    lua_pushinteger(L,rep->err);
     return 3;
   }
   
