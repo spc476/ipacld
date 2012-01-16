@@ -61,6 +61,7 @@ function main()
   local stype
   local sock
   local key
+  local port
   local _
   
   remote,data,cred,err = readcred(g_sock)
@@ -145,11 +146,19 @@ function main()
     return main()
   end
 
-  -- ------------------------------------------
-  -- create the requested socket and return it
-  -- ------------------------------------------
+  -- -----------------------------------------------------------------------
+  -- create the requested socket and return it.  For raw sockets, we need to
+  -- pass in the IP protocol number; otherwise, we can just set the protocol
+  -- value to 0 for TCP or UDP.
+  -- -----------------------------------------------------------------------
 
-  sock,err = net.socket(addr.family,stype)
+  if stype == 'raw' then
+    port = addr.port
+  else
+    port = 0
+  end
+
+  sock,err = net.socket(addr.family,stype,port)
   if err ~= 0 then
     log_failure(remote,cred,addr,stype,err)
     senderr(g_sock,remote,err)
