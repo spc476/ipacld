@@ -19,11 +19,12 @@ sock:bind(laddr)
 
 list =
 {
-  { net.address("192.168.1.10"	, 70 , "tcp")	, 'tcp' } ,
-  { net.address("fc00::1"	, 70 , "tcp")	, 'tcp' } ,
-  { net.address("192.168.1.10"	, 70 , "udp")	, 'udp' } ,
-  { net.address("fc00::1"	, 70 , "udp")	, 'udp' } ,  
-  { net.address("192.168.1.10"	, 17 , "raw")	, 'raw' } ,
+  { net.address("192.168.1.10"	,  70    , "tcp")	, 'tcp' } ,
+  { net.address("fc00::1"	,  70    , "tcp")	, 'tcp' } ,
+  { net.address("192.168.1.10"	, 'qotd' , "udp")	, 'udp' } ,
+  { net.address("fc00::1"	,  70    , "udp")	, 'udp' } ,  
+  { net.address("192.168.1.10"	, 253    , "raw")	, 'raw' } ,
+  { net.address("0.0.0.0"	, 253	 , "raw")	, 'raw'	} ,
 }
 
 i       = math.random(#list)
@@ -36,9 +37,6 @@ _,fh,err = readfd(sock)
 print(fh,err,errno.strerror(err)) io.stdout:flush()
 
 if err ~= 0 then
-  if fh ~= nil then
-    fsys.close(fh)
-  end
   os.remove(lname)
   os.exit(1)
 end

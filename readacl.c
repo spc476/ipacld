@@ -387,6 +387,36 @@ static int socklua_readcred(lua_State *const L)
 
 /*************************************************************************/
 
+static int socklua_senderr(lua_State *const L)
+{
+  sock__t         *sock;
+  sockaddr_all__t *remaddr;
+  aclrep__t        reply;
+  ssize_t          bytes;
+  
+  sock      = luaL_checkudata(L,1,NET_SOCK);
+  remaddr   = luaL_checkudata(L,2,NET_ADDR);
+  reply.err = luaL_checkinteger(L,3);
+  
+  assert(remaddr->sa.sa_family == AF_UNIX);
+  
+  bytes = sendto(sock->fh,&reply,sizeof(reply),0,&remaddr->sa,sizeof(struct sockaddr_un));
+  if (bytes < (ssize_t)sizeof(reply))
+  {
+    int err = (bytes < 0) ? errno : 0;
+    lua_pushboolean(L,false);
+    lua_pushinteger(L,err);
+  }
+  else
+  {
+    lua_pushboolean(L,true);
+    lua_pushinteger(L,0);
+  }
+  return 2;
+}
+
+/*************************************************************************/
+
 static int socklua_sendfd(lua_State *const L)
 {
   sock__t         *sock;
@@ -406,6 +436,8 @@ static int socklua_sendfd(lua_State *const L)
   remaddr = luaL_checkudata(L,2,NET_ADDR);
   fh      = luaL_checkinteger(L,3);
   err     = luaL_optint(L,4,0);
+  
+  assert(remaddr->sa.sa_family == AF_UNIX);
   
   memset(&msg,    0,sizeof(msg));
   memset(&control,0,sizeof(control));
@@ -560,6 +592,8 @@ int luaopen_readacl(lua_State *const L)
   lua_setglobal(L,"acl_encode");
   lua_pushcfunction(L,socklua_acl_decode);
   lua_setglobal(L,"acl_decode");
+  lua_pushcfunction(L,socklua_senderr);
+  lua_setglobal(L,"senderr");
   lua_pushcfunction(L,socklua_sendfd);
   lua_setglobal(L,"sendfd");
   lua_pushcfunction(L,socklua_readfd);

@@ -10,8 +10,9 @@ proc   = require "org.conman.process"
 sig    = require "org.conman.process".sig
          require "readacl"
 
+dofile("/home/spc/source/daemon/acl/version.lua")
 syslog.open('ipacld','daemon')
-syslog('notice',"ipacld starting up")
+syslog('notice',"ipacld " .. VERSION .. " starting up")
 
 if arg[1] == nil then
   dofile("ipacl.conf")
@@ -19,7 +20,6 @@ else
   dofile(arg[1])
 end
 
-local g_null = fsys.open("/dev/null","rw")
 local g_sock
 local g_acl = {}
 
@@ -78,7 +78,7 @@ function main()
     cred.uid = unix.users[cred.uid].userid
   else
     syslog('warn',string.format("user %d does not exist",cred.uid))
-    sendfd(g_sock,remote,g_null:fd(),errno.EPERM)
+    senderr(g_sock,remote,errno.EPERM)
     return main()
   end
   
@@ -86,13 +86,13 @@ function main()
     cred.gid = unix.groups[cred.gid].name
   else
     syslog('warn',string.format("group %d does not exist",cred.gid))
-    sendfd(g_sock,remote,g_null:fd(),errno.EPERM)
+    senderr(g_sock,remote,errno.EPERM)
   end
   
   addr,stype,err = acl_decode(data)
   if err ~= 0 then
     log_failure(remote,cred,addr,stype,err)
-    sendfd(g_sock,remote,g_null:fd(),err)
+    senderr(g_sock,remote,err)
     return main()
   end
 
@@ -103,7 +103,7 @@ function main()
   val = g_acl[stype]
   if val == nil then
     log_failure(remote,cred,addr,stype,errno.EINVAL)
-    sendfd(g_sock,remote,g_null:fd(),errno.EINVAL)
+    senderr(g_sock,remote,errno.EINVAL)
     return main()
   end
 
@@ -115,7 +115,7 @@ function main()
   val = val[key]
   if val == nil then
     log_failure(remote,cred,addr,stype,errno.EPERM)
-    sendfd(g_sock,remote,g_null:fd(),errno.EPERM)
+    senderr(g_sock,remote,errno.EPERM)
     return main()
   end
   
@@ -126,7 +126,7 @@ function main()
   val = val[cred.uid]
   if val == nil then
     log_failure(remote,cred,addr,stype,errno.EPERM)
-    sendfd(g_sock,remote,g_null:fd(),errno.EPERM)
+    senderr(g_sock,remote,errno.EPERM)
     return main()
   end
   
@@ -141,7 +141,7 @@ function main()
   
   if not val then
     log_failure(remore,cred,addr,stype,errno.EPERM)
-    sendfd(g_sock,remote,g_null:fd(),errno.EPERM)
+    senderr(g_sock,remote,errno.EPERM)
     return main()
   end
 
@@ -152,14 +152,14 @@ function main()
   sock,err = net.socket(addr.family,stype)
   if err ~= 0 then
     log_failure(remote,cred,addr,stype,err)
-    sendfd(g_sock,remote,g_null:fd(),err)
+    senderr(g_sock,remote,err)
     return main()
   end
   
   err = sock:bind(addr)
   if err ~= 0 then
     log_failure(remote,cred,addr,stype,err)
-    sendfd(g_sock,remote,g_null:fd(),err)
+    senderr(g_sock,remote,err)
     sock:close()
     return main()
   end
