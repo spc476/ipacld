@@ -165,10 +165,7 @@ static int socklua_acl_encode(lua_State *const L)
          break;
          
     default:
-         assert(0);
-         lua_pushnil(L);
-         lua_pushinteger(L,EINVAL);
-         return 2; 
+    	 return luaL_error(L,"family not supported for this code");
   }
   
   lua_pushlstring(L,(char *)&raw,size);
