@@ -241,36 +241,6 @@ static int socklua_acl_decode(lua_State *const L)
 
 /************************************************************************/
 
-static int socklua_peercred(lua_State *const L)
-{
-  sock__t      *sock;
-  struct ucred  cred;
-  size_t        credsize;
-  
-  sock     = luaL_checkudata(L,1,NET_SOCK);
-  credsize = sizeof(cred);
-  
-  if (getsockopt(sock->fh,SOL_SOCKET,SO_PEERCRED,&cred,&credsize) == -1)
-  {
-    int err = errno;
-    lua_pushnil(L);
-    lua_pushinteger(L,err);
-    return 2;
-  }
-  
-  lua_createtable(L,0,3);
-  lua_pushinteger(L,cred.pid);
-  lua_setfield(L,-2,"pid");
-  lua_pushinteger(L,cred.uid);
-  lua_setfield(L,-2,"uid");
-  lua_pushinteger(L,cred.gid);
-  lua_setfield(L,-2,"gid");
-  lua_pushinteger(L,0);
-  return 2;
-}
-
-/***********************************************************************/
-
 static int sockacl_recvcred(lua_State *const L)
 {
   sock__t *sock;
@@ -601,8 +571,6 @@ static int socklua_readfd(lua_State *const L)
 
 int luaopen_readacl(lua_State *const L)
 {
-  lua_pushcfunction(L,socklua_peercred);
-  lua_setglobal(L,"peercred");
   lua_pushcfunction(L,sockacl_recvcred);
   lua_setglobal(L,"recvcred");
   lua_pushcfunction(L,socklua_readcred);
