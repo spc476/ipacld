@@ -10,7 +10,10 @@ proc   = require "org.conman.process"
 sig    = require "org.conman.process".sig
          require "readacl"
 
-dofile("/home/spc/source/daemon/acl/version.lua")
+if not pcall(dofile,"/home/spc/source/daemon/acl/version.lua") then
+  VERSION = 1
+end
+
 syslog.open('ipacld','daemon')
 syslog('notice',"ipacld " .. VERSION .. " starting up")
 
