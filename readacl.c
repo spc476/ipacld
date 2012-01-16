@@ -48,6 +48,12 @@ typedef enum acltype
   ACLT_max
 } acltype__t;
 
+	/*----------------------------------------------------------------
+	; NOTE: None of the fields need to be sent in network byte order,
+	; 	since the packets never go out the actual network, but to
+	; 	another process on the same system.
+	;----------------------------------------------------------------*/
+
 #ifdef __SunOS
 #  pragma pack(1)
 #endif
@@ -98,12 +104,17 @@ typedef struct aclrep
 #  pragma pack
 #endif
 
+	/*----------------------------------------------------------
+	; the follow structures are defined as for the Lua module
+	; org.conman.net.  Not all fields are used here.
+	;-----------------------------------------------------------*/
+
 typedef union sockaddr_all
 {
   struct sockaddr     sa;
   struct sockaddr_in  sin;
   struct sockaddr_in6 sin6;
-  struct sockaddr_un  ssun;
+  struct sockaddr_un  ssun; /* not used */
 } sockaddr_all__t;
 
 typedef struct sock
