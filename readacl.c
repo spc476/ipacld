@@ -27,11 +27,6 @@
 #define NET_SOCK	"net:sock"
 #define NET_ADDR	"net:addr"
 
-#ifdef __SunOS
-#  define AF_LOCAL	AF_UNIT
-#  define SUN_LEN(x)	sizeof(struct sockaddr_un)
-#endif
-
 /*************************************************************************/
 
 typedef enum aclfamily
