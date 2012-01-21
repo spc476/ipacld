@@ -1,5 +1,5 @@
 
-CC = gcc -std=c99 -Wall -Wextra -pedantic
+CC = gcc -std=c99 -Wall -Wextra -pedantic -g
 
 all: readacl.so ipacl.o ipacl-codec.o
 
