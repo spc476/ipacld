@@ -40,14 +40,6 @@ typedef enum aclfamily
   ACLF_IPv6,
 } aclfamily__t;
 
-typedef enum acltype
-{
-  ACLT_RAW,
-  ACLT_TCP,
-  ACLT_UDP,
-  ACLT_max
-} acltype__t;
-
 	/*----------------------------------------------------------------
 	; NOTE: None of the fields need to be sent in network byte order,
 	; 	since the packets never go out the actual network, but to
@@ -60,39 +52,33 @@ typedef enum acltype
 
 typedef struct aclraw_head
 {
-  uint16_t family;
-  uint16_t type;
+  uint16_t family;	/* ip, ipv6 */
+  uint16_t proto;	/* Protocol to run on top of IP */
 } __attribute__((packed)) aclraw_head__t;
 
 typedef struct aclraw_ipv4
 {
   uint16_t family;
-  uint16_t type;
-  uint16_t port;
+  uint16_t proto;
+  uint16_t port;	/* if applicable for proto */
+  uint16_t rsvp;
   uint32_t addr;
 } __attribute__((packed)) aclraw_ipv4__t;
 
 typedef struct aclraw_ipv6
 {
   uint16_t family;
-  uint16_t type;
-  uint16_t port;
+  uint16_t proto;
+  uint16_t port;	/* if applicable for proto */
+  uint16_t rsvp;
   uint8_t  addr[16];
 } __attribute__((packed)) aclraw_ipv6__t;
-
-typedef struct aclraw_unix
-{
-  uint16_t family;
-  uint16_t type;
-  uint8_t  addr[sizeof(struct sockaddr_un)];
-} __attribute__((packed)) aclraw_unix__t;
 
 typedef union aclraw
 {
   aclraw_head__t head;
   aclraw_ipv4__t ipv4;
   aclraw_ipv6__t ipv6;
-  aclraw_unix__t unix;
 } __attribute__((packed)) aclraw__t;
 
 typedef struct aclrep
@@ -122,18 +108,6 @@ typedef struct sock
   int fh;
 } sock__t;
 
-/*****************************************************************
-* NOTE:  the order here *MUST* match the order in acltype__t.
-*****************************************************************/
-
-const char *const m_types[] =
-{
-  "raw",
-  "tcp",
-  "udp",
-  NULL
-};
-
 /************************************************************************/
 
 static int socklua_acl_encode(lua_State *const L)
@@ -141,26 +115,41 @@ static int socklua_acl_encode(lua_State *const L)
   sockaddr_all__t *addr;
   aclraw__t        raw;
   size_t           size;
-  acltype__t       type;
+  int              proto;
   
   addr = luaL_checkudata(L,1,NET_ADDR);
-  type = luaL_checkoption(L,2,"tcp",m_types);
-    
+  
+  if (lua_isnumber(L,2))
+    proto = lua_tointeger(L,2);
+  else if (lua_isstring(L,2))
+  {
+    struct protoent *e = getprotobyname(lua_tostring(L,2));
+    if (e == NULL)
+    {
+      lua_pushnil(L);
+      lua_pushinteger(L,ENOPROTOOPT);
+      return 2;
+    }
+    proto = e->p_proto;
+  }
+  
   switch(addr->sa.sa_family)
   {
     case AF_INET:
          size            = sizeof(aclraw_ipv4__t);
          raw.ipv4.family = ACLF_IPv4;
-         raw.ipv4.type   = type;
+         raw.ipv4.proto  = proto;
          raw.ipv4.port   = addr->sin.sin_port;
+         raw.ipv4.rsvp   = 0;
          raw.ipv4.addr   = addr->sin.sin_addr.s_addr;
          break;
          
     case AF_INET6:
          size            = sizeof(aclraw_ipv6__t);
          raw.ipv6.family = ACLF_IPv6;
-         raw.ipv6.type   = type;
+         raw.ipv6.proto  = proto;
          raw.ipv6.port   = addr->sin6.sin6_port;
+         raw.ipv6.rsvp   = 0;
          memcpy(raw.ipv6.addr,addr->sin6.sin6_addr.s6_addr,16);
          break;
          
@@ -169,7 +158,8 @@ static int socklua_acl_encode(lua_State *const L)
   }
   
   lua_pushlstring(L,(char *)&raw,size);
-  return 1;
+  lua_pushinteger(L,0);
+  return 2;
 }
 
 /*************************************************************************/
@@ -179,18 +169,13 @@ static int socklua_acl_decode(lua_State *const L)
   aclraw__t       *raw;
   size_t           size;
   sockaddr_all__t *addr;
-  acltype__t       type;
+  struct protoent *ent;
+  int              proto;
   
-  raw  = (aclraw__t *)luaL_checklstring(L,1,&size);
-  type = raw->head.type;
-  if (type >= ACLT_max)
-  {
-    lua_pushnil(L);
-    lua_pushinteger(L,EPROTO);
-    return 2;
-  }
+  raw   = (aclraw__t *)luaL_checklstring(L,1,&size);
+  proto = raw->head.proto;  
+  addr  = lua_newuserdata(L,sizeof(sockaddr_all__t));  
 
-  addr = lua_newuserdata(L,sizeof(sockaddr_all__t));  
   switch(raw->head.family)
   {
     case ACLF_IPv4:
@@ -230,8 +215,13 @@ static int socklua_acl_decode(lua_State *const L)
 
   luaL_getmetatable(L,NET_ADDR);
   lua_setmetatable(L,-2);
-  
-  lua_pushstring(L,m_types[type]);
+
+  ent = getprotobynumber(proto);
+  if (ent == NULL)
+    lua_pushinteger(L,proto);
+  else
+    lua_pushstring(L,ent->p_name);
+
   lua_pushinteger(L,0);
   return 3;
 }
