@@ -39,14 +39,6 @@ local users =
 
 function request_okay(cred,addr,proto)
 
-  syslog('debug',string.format(
-  		"checking %d:%d %s %s",
-  		cred.uid,
-  		cred.gid,
-  		tostring(addr),
-  		tostring(proto)
-  	))
-  	
   if  cred.uid == 9999 
   and cred.gid == 9999
   and addr.port == 17
@@ -56,12 +48,10 @@ function request_okay(cred,addr,proto)
   end
 
   if unix.users[cred.uid] == nil then
-    syslog('debug',"NO UID")
     return false
   end
   
   if unix.groups[cred.gid] == nil then
-    syslog('debug',"NO GID")
     return false
   end
   
@@ -70,26 +60,13 @@ function request_okay(cred,addr,proto)
   end
   
   if proto ~= 'tcp' and proto ~= 'udp' then
-    syslog('debug',"BAD PROTO")
     return false
   end
 
   uname = unix.users[cred.uid].userid
   if users[uname] == nil then
-    syslog('debug',string.format("%s not in users table",uname))
     return false
   end
   
-  syslog('debug',string.format(
-  		"lookup %s %s %s",
-  		uname,
-  		tostring(addr),
-  		tostring(users[uname][tostring(addr)])
-  	))
-  
-  
-  
   return users[uname][tostring(addr)]
 end
-
-xx_users = users
