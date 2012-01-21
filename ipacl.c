@@ -15,8 +15,8 @@
 #include <netdb.h>
 #include <unistd.h>
 
-#include "ipacl.h"
 #include "ipacl-proto.h"
+#include "ipacl.h"
 
 /*************************************************************************/
 
