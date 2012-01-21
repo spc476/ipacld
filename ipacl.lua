@@ -51,7 +51,7 @@ function request_okay(cred,addr,proto)
   and cred.gid == 9999
   and addr.port == 17
   then
-    local exe = fsys.readlink(string.format("/proc/%d/exe",cred,pid))
+    local exe = fsys.readlink(string.format("/proc/%d/exe",cred.pid))
     return exe == '/home/spc/source/daemon/misc/qotd'
   end
 
