@@ -2,17 +2,9 @@
 #ifndef IPACL_H
 #define IPACL_H
 
-typedef union ipacl_addr
-{
-  struct sockaddr     sa;
-  struct sockaddr_in  sin;
-  struct sockaddr_in6 sin6;
-} ipacl_addr__t;
-
 /**********************************************************************/
 
 extern const struct sockaddr_un ipacl_port;
-
 
 int ipacl_request_s(
 		int        *const restrict pfh,

@@ -58,13 +58,28 @@ typedef struct ipaclrep
 #  pragma pack
 #endif
 
+typedef union ipacl_addr
+{
+  struct sockaddr     sa;
+  struct sockaddr_in  sin;
+  struct sockaddr_in6 sin6;
+} ipacl_addr__t;
+
 /**********************************************************************/
 
 int ipacl_encode(
 		ipaclraw__t         *const restrict raw,
 		size_t              *const restrict rawsize,
 		const ipacl_addr__t *const restrict addr,
-		const int                           protocol
+		const unsigned int                  protocol
+	) __attribute__((nonnull,nothrow));
+	
+int ipacl_decode(
+		ipacl_addr__t     *const restrict addr,
+		size_t            *const restrict addrsize,
+		int               *const restrict pprotocol,
+		const ipaclraw__t *const restrict raw,
+		const size_t                      rawsize
 	) __attribute__((nonnull,nothrow));
 
 #endif
