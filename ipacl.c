@@ -152,7 +152,7 @@ int ipacl_do_request_s(
   if (pp == NULL)
     return EINVAL;
   
-  return ipacl_do_request(reqport,pfh,ip,ps->s_port,pp->p_proto);
+  return ipacl_do_request(reqport,pfh,ip,pp->p_proto,ntohs(ps->s_port));
 }
 
 /************************************************************************/
