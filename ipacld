@@ -18,39 +18,41 @@ syslog.open('ipacld','daemon')
 syslog('notice',"ipacld " .. VERSION .. " starting up")
 
 if arg[1] == nil then
-  dofile("ipacl.conf")
+  dofile("ipacl.lua")
 else
   dofile(arg[1])
 end
 
 local g_sock
-local g_acl = {}
 
 -- *********************************************************************
 
-function log_success(remote,cred,addr,stype)
-  syslog('notice',string.format("success: rem=%s uid=%s gid=%s family=%s addr=%s port=%s type=%s",
+function log_success(remote,cred,addr,proto)
+  syslog('notice',string.format("success: rem=%s uid=%s gid=%s family=%s addr=%s proto=%s port=%s",
   		tostring(remote),
       		cred.uid,
       		cred.gid,
       		addr.family,
       		addr.addr,
-      		addr.port,
-      		stype))      		
+		proto,
+      		addr.port
+      		))      		
 end
 
 -- *********************************************************************
 
-function log_failure(remote,cred,addr,stype,err)
-  syslog('err',string.format("failure: err=%q rem=%s uid=%s gid=%s family=%s addr=%s port=%s type=%s",
+function log_failure(point,remote,cred,addr,proto,err)
+  syslog('err',string.format("failure: at=%q err=%q rem=%s uid=%s gid=%s family=%s addr=%s proto=%s port=%s",
+		point,
   		errno.strerror(err),
   		tostring(remote),
       		cred.uid,
       		cred.gid,
       		addr.family,
       		addr.addr,
-      		addr.port,
-      		stype))
+		proto,
+      		addr.port
+      		))
 end
 
 -- *********************************************************************
@@ -61,11 +63,8 @@ function main()
   local cred
   local err
   local addr
-  local stype
   local sock
-  local key
-  local port
-  local _
+  local proto
   
   remote,data,cred,err = readcred(g_sock)
   if err ~= 0 then
@@ -78,124 +77,60 @@ function main()
     return main()
   end
   
-  if unix.users[cred.uid] ~= nil then
-    cred.uid = unix.users[cred.uid].userid
-  else
-    syslog('warn',string.format("user %d does not exist",cred.uid))
-    senderr(g_sock,remote,errno.EPERM)
-    return main()
-  end
-  
-  if unix.groups[cred.gid] ~= nil then
-    cred.gid = unix.groups[cred.gid].name
-  else
-    syslog('warn',string.format("group %d does not exist",cred.gid))
-    senderr(g_sock,remote,errno.EPERM)
-  end
-  
-  addr,stype,err = acl_decode(data)
+  addr,proto,err = acl_decode(data)
   if err ~= 0 then
-    log_failure(remote,cred,addr,stype,err)
-    senderr(g_sock,remote,err)
-    return main()
-  end
-
-  -- ------------------------------
-  -- get the TCP, UDP or RAW table
-  -- ------------------------------
-
-  val = g_acl[stype]
-  if val == nil then
-    log_failure(remote,cred,addr,stype,errno.EINVAL)
-    senderr(g_sock,remote,errno.EINVAL)
-    return main()
-  end
-
-  -- ----------------------
-  -- get the address table
-  -- ----------------------
-
-  key = string.format("%s:%s",addr.addr,addr.port)  
-  val = val[key]
-  if val == nil then
-    log_failure(remote,cred,addr,stype,errno.EPERM)
-    senderr(g_sock,remote,errno.EPERM)
-    return main()
-  end
-  
-  -- -----------------------------------
-  -- get if the user can open this port
-  -- -----------------------------------
-
-  val = val[cred.uid]
-  if val == nil then
-    log_failure(remote,cred,addr,stype,errno.EPERM)
-    senderr(g_sock,remote,errno.EPERM)
-    return main()
-  end
-  
-  -- -------------------------------------------------------------------
-  -- if this is a function, run it, passing the group value.  This had
-  -- better return a bool
-  -- -------------------------------------------------------------------
-
-  if type(val) == 'function' then 
-    val = val(cred.gid) 
-  end
-  
-  if not val then
-    log_failure(remore,cred,addr,stype,errno.EPERM)
-    senderr(g_sock,remote,errno.EPERM)
-    return main()
-  end
-
-  -- -----------------------------------------------------------------------
-  -- create the requested socket and return it.  For raw sockets, we need to
-  -- pass in the IP protocol number; otherwise, we can just set the protocol
-  -- value to 0 for TCP or UDP.
-  -- -----------------------------------------------------------------------
-
-  if stype == 'raw' then
-    port = addr.port
-  else
-    port = 0
-  end
-
-  sock,err = net.socket(addr.family,stype,port)
-  if err ~= 0 then
-    log_failure(remote,cred,addr,stype,err)
+    log_failure('decode',remote,cred,addr,proto,err)
     senderr(g_sock,remote,err)
     return main()
   end
   
-  err = sock:bind(addr)
-  if err ~= 0 then
-    log_failure(remote,cred,addr,stype,err)
-    senderr(g_sock,remote,err)
+  if request_okay(cred,addr,proto) then
+    sock,err = net.socket(addr.family,proto)
+    if err ~= 0 then
+      log_failure('socket',remote,cred,addr,proto,err)
+      senderr(g_sock,remote,err)
+      return main()
+    end
+    
+    _,err = sock:reuse()
+    if err ~= 0 then
+      log_failure('reuse',remote,cred,addr,proto,err)
+      senderr(g_sock,remote,err)
+      sock:close()
+      return main()
+    end
+
+    err = sock:bind(addr)
+    if err == 0 then
+      log_success(remote,cred,addr,proto)
+      sendfd(g_sock,remote,sock:fd())
+    else
+      log_failure('bind',remote,cred,addr,proto,err)
+      senderr(g_sock,remote,err)
+    end
+    
     sock:close()
-    return main()
+  else
+    log_failure('request_okay',remote,cred,addr,proto,errno.EPERM)
+    senderr(g_sock,remote,errno.EPERM)
   end
-
-  log_success(remote,cred,addr,stype)  
-  sendfd(g_sock,remote,sock:fd())
-  sock:close()
+  
   return main()
 end
-
+      
 -- *************************************************************************  
-
-g_acl = 
-{
-  tcp = TCP,
-  udp = UDP,
-  raw = RAW
-}
 
 sig.catch(sig.INT)
 fsys.umask("--x--x--x")
 os.remove("/dev/ipacl")
-laddr = net.address("/dev/ipacl")
-g_sock  = net.socket(laddr.family,'udp')
+laddr   = net.address("/dev/ipacl")
+
+g_sock,err  = net.socket('unix','udp')
+if err ~= 0 then
+  print("socket()",errno.strerror(err))
+  os.exit(1)
+end
+
 g_sock:bind(laddr)
 recvcred(g_sock)
 
