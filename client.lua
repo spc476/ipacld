@@ -19,17 +19,25 @@ sock:bind(laddr)
 
 list =
 {
-  { net.address("192.168.1.10"	,  70    , "tcp")	, 'tcp' } ,
-  { net.address("fc00::1"	,  70    , "tcp")	, 'tcp' } ,
-  { net.address("192.168.1.10"	, 'qotd' , "udp")	, 'udp' } ,
-  { net.address("fc00::1"	,  70    , "udp")	, 'udp' } ,  
-  { net.address("192.168.1.10"	, 253    , "raw")	, 'raw' } ,
-  { net.address("0.0.0.0"	, 253	 , "raw")	, 'raw'	} ,
+  { net.address("192.168.1.10"	,  70    , "tcp")	, 'tcp'  } ,
+  { net.address("fc00::1"	,  70    , "tcp")	, 'tcp'  } ,
+  { net.address("192.168.1.10"	, 'tftp' , "udp")	, 'udp'  } ,
+  { net.address("0.0.0.0"	, 'tftp' , 'udp')	, 'udp'	 } ,
+  { net.address("fc00::1"	,  70    , "udp")	, 'udp'  } ,  
+  { net.address("192.168.1.10"	, 0      ,  253)	,  253   } ,
+  { net.address("0.0.0.0"	, 0	 ,  253)	,  253   } ,
+  { net.address("0.0.0.0"	, 0      , 'ospf')	, 'ospf' } ,
 }
 
 i       = math.random(#list)
 print(list[i][1],list[i][2])
-request = acl_encode(list[i][1],list[i][2])
+
+request,err = acl_encode(list[i][1],list[i][2])
+if err ~= 0 then
+  print(list[i][1],list[i][2],errno.strerror(err))
+  os.exit(1)
+end
+
 sock:write(raddr,request)
 
 _,fh,err = readfd(sock)
