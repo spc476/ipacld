@@ -2,11 +2,19 @@
 CC     = gcc -std=c99 -Wall -Wextra -pedantic -g
 LUALIB = /usr/local/lib/lua/5.1
 
-all: readacl.so ipacl-client.o ipacl-server.o ipacltest ipacl_s.so
+all: readacl.so		\
+	ipacl-client.o	\
+	ipacl-server.o	\
+	ipacltest	\
+	ipacl_s.so	\
+	ipacl.so
 
 ipacltest : ipacltest.o ipacl-client.o
 	$(CC) -o $@ ipacltest.o ipacl-client.o
 
+ipacl.so : ipacllua.c ipacl-client.c ipacl-proto.h ipacl.h
+	$(CC) -shared -fPIC -o $@ ipacllua.c ipacl-client.c
+	
 ipacl_s.so : ipacllua-s.c ipacl-server.c ipacl-proto.h ipacl-server.h
 	$(CC) -shared -fPIC -o $@ ipacllua-s.c ipacl-server.c
 	
@@ -30,10 +38,12 @@ install:
 	install -d $(LUALIB)/org/conman
 	install -d $(LUALIB)/org/conman/net
 	install ipacl_s.so $(LUALIB)/org/conman/net
+	install ipacl.so   $(LUALIB)/org/conman/net
 
 remove:
 	/bin/rm -rf $(LUALIB)/org/conman/net/ipacl_s.so
-
+	/bin/rm -rf $(LUALIB)/org/conman/net/ipacl.so
+	
 clean:
 	/bin/rm -rf readacl.so *~ *.o ipacltest
 
