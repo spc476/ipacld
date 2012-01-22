@@ -122,7 +122,7 @@ int ipacls_read_request(
   msg.msg_iov             = &iovec;
   msg.msg_iovlen          = 1;
   msg.msg_name            = (struct sockaddr *)remote;
-  msg.msg_namelen         = sizeof(remote);
+  msg.msg_namelen         = sizeof(struct sockaddr_un);
   
   bytes = recvmsg(reqport,&msg,0);
 
