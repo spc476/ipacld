@@ -6,11 +6,15 @@ all: readacl.so		\
 	ipacl-client.o	\
 	ipacl-server.o	\
 	ipacltest	\
+	ipaclsrv	\
 	ipacl_s.so	\
 	ipacl.so
 
 ipacltest : ipacltest.o ipacl-client.o
 	$(CC) -o $@ ipacltest.o ipacl-client.o
+
+ipaclsrv : ipaclsrv.c ipacl-server.o
+	$(CC) -o $@ ipaclsrv.c ipacl-server.o
 
 ipacl.so : ipacllua.c ipacl-client.c ipacl-proto.h ipacl.h
 	$(CC) -shared -fPIC -o $@ ipacllua.c ipacl-client.c
