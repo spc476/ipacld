@@ -103,7 +103,7 @@ static int ipaclluas_open(lua_State *const L)
   else
     lua_pushnil(L);
   
-  lua_pushnil(L);
+  lua_pushinteger(L,rc);
   return 2;
 }
 
@@ -126,6 +126,7 @@ static int ipaclluas_read(lua_State *const L)
   struct ucred     cred;
   sockaddr_all__t *remote;
   sockaddr_all__t *addr;
+  struct protoent *e;
   unsigned int     proto;
   int              rc;
   
@@ -140,8 +141,9 @@ static int ipaclluas_read(lua_State *const L)
     lua_pushnil(L);
     lua_pushnil(L);
     lua_pushnil(L);
+    lua_pushnil(L);
     lua_pushinteger(L,rc);
-    return 4;
+    return 5;
   }
   
   luaL_getmetatable(L,NET_ADDR);
@@ -156,8 +158,14 @@ static int ipaclluas_read(lua_State *const L)
   lua_pushinteger(L,cred.gid);
   lua_setfield(L,-3,"gid");
   
+  e = getprotobynumber(proto);
+  if (e == NULL)
+    lua_pushinteger(L,proto);
+  else
+    lua_pushstring(L,e->p_name);
+
   lua_pushinteger(L,0);
-  return 4;
+  return 5;
 }
 
 /************************************************************************/
