@@ -79,7 +79,7 @@ int ipacl_encode(
 int ipacl_decode(
 		ipacl_addr__t     *const restrict addr,
 		size_t            *const restrict addrsize,
-		int               *const restrict pprotocol,
+		unsigned int      *const restrict pprotocol,
 		const ipaclraw__t *const restrict raw,
 		const size_t                      rawsize
 	) __attribute__((nonnull,nothrow));
