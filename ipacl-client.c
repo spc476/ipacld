@@ -20,14 +20,6 @@
 
 /*************************************************************************/
 
-const struct sockaddr_un ipacl_port = 
-{
-  .sun_family = AF_LOCAL,
-  .sun_path   = "/dev/ipacl"
-};
-
-/************************************************************************/
-
 int ipacl_request_s(
 	int        *const restrict pfh,
 	const char *const restrict ip,

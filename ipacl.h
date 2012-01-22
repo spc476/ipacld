@@ -4,8 +4,6 @@
 
 /**********************************************************************/
 
-extern const struct sockaddr_un ipacl_port;
-
 int ipacl_request_s(
 		int        *const restrict pfh,
 		const char *const restrict ip,

@@ -18,6 +18,14 @@
 
 /*************************************************************************/
 
+const struct sockaddr_un ipacl_port =
+{
+  .sun_family = AF_LOCAL,
+  .sun_path   = "/dev/ipacl"
+};
+
+/*************************************************************************/
+
 int ipacl_encode(
 	ipaclraw__t         *const restrict raw,
 	size_t              *const restrict rawsize,

@@ -67,6 +67,8 @@ typedef union ipacl_addr
 
 /**********************************************************************/
 
+extern const struct sockaddr_un ipacl_port;
+
 int ipacl_encode(
 		ipaclraw__t         *const restrict raw,
 		size_t              *const restrict rawsize,
