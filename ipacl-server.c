@@ -102,13 +102,11 @@ int ipacls_read_request(
     char           data[CMSG_SPACE(sizeof(struct ucred))];
   } control;
   
-  assert(reqport            >= 0);
-  assert(remote             != NULL);
-  assert(remote->sun_family == AF_LOCAL);
-  assert(cred               != NULL);
-  assert(addr               != NULL);
-  assert((addr->sa_family == AF_INET) || (addr->sa_family == AF_INET6));
-  assert(protocol           != NULL);
+  assert(reqport  >= 0);
+  assert(remote   != NULL);
+  assert(cred     != NULL);
+  assert(addr     != NULL);
+  assert(protocol != NULL);
   
   memset(&control,0,sizeof(control));
   memset(&iovec,  0,sizeof(iovec));
