@@ -53,13 +53,19 @@ function main(req)
   local err
   local _
 
-  if sig.caught(sig.INT) then
+  local function shutdown(s)
     req:close()
-    sig.default(sig.INT)
-    proc.kill(proc.PID,sig.INT)
+    sig.default(s)
+    proc.kill(proc.PIC,s)
     proc.exit(1)
   end
-  
+
+  if sig.caught(sig.INT) then
+    shutdown(sig.INT)
+  elseif sig.caught(sig.TERM) then
+    shutdown(sig.TERM)
+  end
+
   remote,cred,addr,proto,err = req:read()
   
   if err ~= 0 then
@@ -119,6 +125,7 @@ else
 end
 
 sig.catch(sig.INT)
+sig.catch(sig.TERM)
 
 local sock,err = ipacl_s.open()
 if err ~= 0 then
