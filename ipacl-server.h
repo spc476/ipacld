@@ -6,10 +6,10 @@ int ipacls_open(int *const) __attribute__((nonnull));
 
 int ipacls_read_request(
 		const int                          reqport,
-		ipacl_addr__t      *const restrict addr,
+		struct sockaddr_un *const restrict remote,
 		struct ucred       *const restrict cred,
-		unsigned int       *const restrict protocol,
-		struct sockaddr_un *const restrict remote
+		struct sockaddr    *const restrict addr,
+		unsigned int       *const restrict protocol
 	) __attribute__((nonnull,nothrow));
 
 int ipacls_send_err(

@@ -1,7 +1,7 @@
 
 CC = gcc -std=c99 -Wall -Wextra -pedantic -g
 
-all: readacl.so ipacl-client.o ipacl-codec.o ipacl-server.o
+all: readacl.so ipacl-client.o ipacl-server.o
 
 ipacl-server.o : ipacl-server.c ipacl-proto.h ipacl-server.h
 	$(CC) -c $<

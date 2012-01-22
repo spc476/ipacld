@@ -23,7 +23,32 @@
 #include "ipacl-proto.h"
 #include "ipacl-server.h"
 
+typedef union
+{
+  struct sockaddr     sa;
+  struct sockaddr_in  sin;
+  struct sockaddr_in6 sin6;
+} addr__t;
+
 /************************************************************************/
+
+static int decode(
+		struct sockaddr   *const restrict addr,
+		size_t            *const restrict addrsize,
+		unsigned int      *const restrict pprotocol,
+		const ipaclraw__t *const restrict raw,
+		const size_t                      rawsize
+	) __attribute__((nonnull,nothrow));
+
+/************************************************************************/
+
+static const struct sockaddr_un mipacl_port =
+{
+  .sun_family = AF_LOCAL,
+  .sun_path   = "/dev/ipacl"
+};
+
+/***********************************************************************/
 
 int ipacls_open(int *const pfh)
 {
@@ -31,12 +56,12 @@ int ipacls_open(int *const pfh)
   
   assert(pfh != NULL);
   
-  remove(ipacl_port.sun_path);
+  remove(mipacl_port.sun_path);
 
   *pfh = socket(AF_LOCAL,SOCK_DGRAM,0);
   if (*pfh == -1)
     return errno;
-  if (bind(*pfh,(struct sockaddr *)&ipacl_port,sizeof(ipacl_port)) < 0)
+  if (bind(*pfh,(struct sockaddr *)&mipacl_port,sizeof(mipacl_port)) < 0)
   {
     int err = errno;
     close(*pfh);
@@ -59,10 +84,10 @@ int ipacls_open(int *const pfh)
 
 int ipacls_read_request(
 		const int                          reqport,
-		ipacl_addr__t      *const restrict addr,
+		struct sockaddr_un *const restrict remote,
 		struct ucred       *const restrict cred,
-		unsigned int       *const restrict protocol,
-		struct sockaddr_un *const restrict remote
+		struct sockaddr    *const restrict addr,
+		unsigned int       *const restrict protocol
 )
 {
   struct msghdr   msg;
@@ -78,11 +103,12 @@ int ipacls_read_request(
   } control;
   
   assert(reqport            >= 0);
-  assert(addr               != NULL);
-  assert(cred               != NULL);
-  assert(protocol           != NULL);
   assert(remote             != NULL);
   assert(remote->sun_family == AF_LOCAL);
+  assert(cred               != NULL);
+  assert(addr               != NULL);
+  assert((addr->sa_family == AF_INET) || (addr->sa_family == AF_INET6));
+  assert(protocol           != NULL);
   
   memset(&control,0,sizeof(control));
   memset(&iovec,  0,sizeof(iovec));
@@ -117,7 +143,7 @@ int ipacls_read_request(
   }
   
   memcpy(cred,CMSG_DATA(cmsg),sizeof(struct ucred));
-  return ipacl_decode(addr,&dummy,protocol,&packet,bytes);
+  return decode(addr,&dummy,protocol,&packet,bytes);
 }
 
 /***********************************************************************/
@@ -204,10 +230,54 @@ int ipacls_close(const int reqport)
   
   if (close(reqport) < 0)
     return errno;
-  if (remove(ipacl_port.sun_path) < 0)
+  if (remove(mipacl_port.sun_path) < 0)
     return errno;
   return 0;
 }
 
 /*********************************************************************/
+
+static int decode(
+	struct sockaddr   *const restrict addr,
+	size_t		  *const restrict addrsize,
+	unsigned int      *const restrict pprotocol,
+	const ipaclraw__t *const restrict raw,
+	const size_t                      rawsize
+)
+{
+  assert(addr      != NULL);
+  assert(addrsize  != NULL);
+  assert(pprotocol != NULL);
+  assert(raw       != NULL);
+
+  switch(raw->head.family)
+  {
+    case AF_INET:
+         if (rawsize < sizeof(ipaclraw_ipv4__t))
+           return EINVAL;
+         
+         *addrsize                              = sizeof(struct sockaddr_in);
+         *pprotocol                             = raw->ipv4.proto;
+         ((addr__t *)addr)->sin.sin_family      = AF_INET;
+         ((addr__t *)addr)->sin.sin_port        = raw->ipv4.port;
+         ((addr__t *)addr)->sin.sin_addr.s_addr = raw->ipv4.addr;
+         return 0;
+         
+    case AF_INET6:
+         if (rawsize < sizeof(ipaclraw_ipv6__t))
+           return EINVAL;
+         
+         *addrsize                           = sizeof(struct sockaddr_in6);
+         *pprotocol                          = raw->ipv6.proto;
+         ((addr__t *)addr)->sin6.sin6_family = AF_INET6;
+         ((addr__t *)addr)->sin6.sin6_port   = raw->ipv6.port;
+         memcpy(((addr__t *)addr)->sin6.sin6_addr.s6_addr,raw->ipv6.addr,16);
+         return 0;
+
+    default:
+         return EINVAL;
+  }
+}
+
+/**********************************************************************/
 
