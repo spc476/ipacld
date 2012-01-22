@@ -2,57 +2,37 @@
 
 errno = require "org.conman.errno"
 proc  = require "org.conman.process"
-fsys  = require "org.conman.fsys"
 net   = require "org.conman.net"
+ipacl = require "org.conman.net.ipacl"
         require "org.conman.math".randomseed()
-        require "readacl"
 
 proc.sig.catch(proc.sig.INT)
-fsys.umask("--x--x--x")
 
-lname = string.format("/tmp/ipacl-request.%d",proc.PID)
-
-raddr = net.address("/dev/ipacl")
-laddr = net.address(lname)
-sock  = net.socket(laddr.family,'udp')
-sock:bind(laddr)
-
-list =
+list = 
 {
-  { net.address("192.168.1.10"	,  70    , "tcp")	, 'tcp'  } ,
-  { net.address("fc00::1"	,  70    , "tcp")	, 'tcp'  } ,
-  { net.address("192.168.1.10"	, 'tftp' , "udp")	, 'udp'  } ,
-  { net.address("0.0.0.0"	, 'tftp' , 'udp')	, 'udp'	 } ,
-  { net.address("fc00::1"	,  70    , "udp")	, 'udp'  } ,  
-  { net.address("192.168.1.10"	, 0      ,  253)	,  253   } ,
-  { net.address("0.0.0.0"	, 0	 ,  253)	,  253   } ,
-  { net.address("0.0.0.0"	, 0      , 'ospf')	, 'ospf' } ,
+  { "192.168.1.10" 	, 'tcp' , 'gopher'	} ,
+  { "fc00::1"		, 'tcp' , 'gopher'	} ,
+  { "192.168.1.10"	, 'udp' , 'tftp'	} ,
+  { "0.0.0.0"		, 'udp' , 'tftp'	} ,
+  { "fc00::1"		, 89	, 0		}
 }
 
-i       = math.random(#list)
-print(list[i][1],list[i][2])
+i = math.random(#list)
+print(list[i][1],list[i][2],list[1][3])
 
-request,err = acl_encode(list[i][1],list[i][2])
-if err ~= 0 then
-  print(list[i][1],list[i][2],errno.strerror(err))
+fh,e = ipacl.request(list[i][1],list[i][2],list[i][3])
+
+if e ~= 0 then
+  print("failed",errno.strerror(e))
   os.exit(1)
 end
 
-sock:write(raddr,request)
-
-_,fh,err = readfd(sock)
-
-print(fh,err,errno.strerror(err)) io.stdout:flush()
-
-if err ~= 0 then
-  os.remove(lname)
-  os.exit(1)
-end
+print("success")
 
 if list[i][2] == 'tcp' then
-  newsock = net.socketfd(fh)
-  newsock:listen()
+  sock = net.socketfd(fh)
+  sock:listen()
 end
 
 proc.sleep(300)
-os.remove(lname)
+os.exit(0)
