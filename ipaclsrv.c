@@ -7,7 +7,6 @@
 
 #include <arpa/inet.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/poll.h>
@@ -32,7 +31,6 @@ int main(
   int fh;
   int rc;
   
-  umask(011);
   rc = ipacls_open(&fh);
   if (rc != 0)
   {
