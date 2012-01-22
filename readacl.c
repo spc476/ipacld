@@ -29,12 +29,6 @@
 
 /*************************************************************************/
 
-typedef enum aclfamily
-{
-  ACLF_IPv4,
-  ACLF_IPv6,
-} aclfamily__t;
-
 	/*----------------------------------------------------------------
 	; NOTE: None of the fields need to be sent in network byte order,
 	; 	since the packets never go out the actual network, but to
@@ -132,7 +126,7 @@ static int socklua_acl_encode(lua_State *const L)
   {
     case AF_INET:
          size            = sizeof(aclraw_ipv4__t);
-         raw.ipv4.family = ACLF_IPv4;
+         raw.ipv4.family = AF_INET;
          raw.ipv4.proto  = proto;
          raw.ipv4.port   = addr->sin.sin_port;
          raw.ipv4.rsvp   = 0;
@@ -141,7 +135,7 @@ static int socklua_acl_encode(lua_State *const L)
          
     case AF_INET6:
          size            = sizeof(aclraw_ipv6__t);
-         raw.ipv6.family = ACLF_IPv6;
+         raw.ipv6.family = AF_INET6;
          raw.ipv6.proto  = proto;
          raw.ipv6.port   = addr->sin6.sin6_port;
          raw.ipv6.rsvp   = 0;
@@ -173,7 +167,7 @@ static int socklua_acl_decode(lua_State *const L)
 
   switch(raw->head.family)
   {
-    case ACLF_IPv4:
+    case AF_INET:
          if (size < sizeof(aclraw_ipv4__t))
          {
            lua_pushnil(L);
@@ -187,7 +181,7 @@ static int socklua_acl_decode(lua_State *const L)
          addr->sin.sin_addr.s_addr = raw->ipv4.addr;
          break;
          
-    case ACLF_IPv6:
+    case AF_INET6:
          if (size < sizeof(aclraw_ipv6__t))
          {
            lua_pushnil(L);
