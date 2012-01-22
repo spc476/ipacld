@@ -2,8 +2,7 @@
 CC     = gcc -std=c99 -Wall -Wextra -pedantic -g
 LUALIB = /usr/local/lib/lua/5.1
 
-all: readacl.so		\
-	ipacl-client.o	\
+all:	ipacl-client.o	\
 	ipacl-server.o	\
 	ipacltest	\
 	ipaclsrv	\
@@ -33,9 +32,6 @@ ipacltest.o : ipacltest.c ipacl.h
 
 ipacl-codec.o : ipacl-codec.c ipacl-proto.h
 	$(CC) -c $<
-	
-readacl.so : readacl.c
-	$(CC) -shared -fPIC -o $@ $<
 	
 install:
 	install -d $(LUALIB)/org
