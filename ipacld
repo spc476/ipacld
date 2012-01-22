@@ -3,6 +3,7 @@
 syslog  = require "org.conman.syslog"
 net     = require "org.conman.net"
 errno   = require "org.conman.errno"
+proc    = require "org.conman.process"
 sig     = require "org.conman.process".sig
 ipacl_s = require "org.conman.net.ipacl_s"
 
@@ -51,8 +52,23 @@ function main(req)
   local sock
   local err
   local _
+
+  if sig.caught(sig.INT) then
+    req:close()
+    sig.default(sig.INT)
+    proc.kill(proc.PID,sig.INT)
+    proc.exit(1)
+  end
   
   remote,cred,addr,proto,err = req:read()
+  
+  if err ~= 0 then
+    if err ~= errno.EINTR then
+      syslog('err',string.format("req:read() = %s",errno.strerror(err)))
+    end
+    return main(req)
+  end
+  
   if request_okay(cred,addr,proto) then
     sock,err = net.socket(addr.family,proto)
     if err ~= 0 then
