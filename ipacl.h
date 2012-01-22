@@ -19,9 +19,9 @@ int ipacl_request(
 	) __attribute__((nonnull,nothrow));
 
 int ipacl_request_addr(
-		int                 *const restrict pfh,
-		const ipacl_addr__t *const restrict addr,
-		const unsigned int                  protocol
+		int                   *const restrict pfh,
+		const struct sockaddr *const restrict sa,
+		const unsigned int                    protocol
 	) __attribute__((nonnull,nothrow));
 
 int ipacl_open(int *const) __attribute__((nonnull,nothrow));
@@ -43,10 +43,10 @@ int ipacl_do_request(
 	) __attribute__((nonnull,nothrow));
 
 int ipacl_do_request_addr(
-		const int                           reqport,
-		int                 *const restrict pfh,
-		const ipacl_addr__t *const restrict req,
-		const unsigned int                  protocol
+		const int                             reqport,
+		int                   *const restrict pfh,
+		const struct sockaddr *const restrict addr,
+		const unsigned int                    protocol
 	) __attribute__((nonnull,nothrow));
 
 int ipacl_close(const int reqport) __attribute__((nothrow));

@@ -18,6 +18,22 @@
 #include "ipacl-proto.h"
 #include "ipacl.h"
 
+typedef union
+{
+  struct sockaddr     sa;
+  struct sockaddr_in  sin;
+  struct sockaddr_in6 sin6;
+} addr__t;
+
+/*************************************************************************/
+
+static int encode(
+		ipaclraw__t           *const restrict raw,
+		size_t                *const restrict rawsize,
+		const struct sockaddr *const restrict addr,
+		const unsigned int                    protocol
+	) __attribute__((nonnull,nothrow));
+	
 /*************************************************************************/
 
 int ipacl_request_s(
@@ -69,9 +85,9 @@ int ipacl_request(
 /************************************************************************/
 
 int ipacl_request_addr(
-	int                 *const restrict pfh,
-	const ipacl_addr__t *const restrict addr,
-	const unsigned int                  protocol
+	int                   *const restrict pfh,
+	const struct sockaddr *const restrict addr,
+	const unsigned int                    protocol
 )
 {
   int fh;
@@ -80,7 +96,7 @@ int ipacl_request_addr(
   assert(pfh      != NULL);
   assert(addr     != NULL);
   assert(protocol <= 65535u);
-  assert((addr->sa.sa_family == AF_INET) || (addr->sa.sa_family == AF_INET6));
+  assert((addr->sa_family == AF_INET) || (addr->sa_family == AF_INET6));
 
   if ((rc = ipacl_open(&fh)) != 0)
     return rc;
@@ -157,7 +173,7 @@ int ipacl_do_request(
 	const unsigned int         port
 )
 {
-  ipacl_addr__t addr;
+  addr__t addr;
   
   assert(reqport  >= 0);
   assert(pfh      != NULL);
@@ -181,18 +197,24 @@ int ipacl_do_request(
     return EINVAL;
   }
   
-  return ipacl_do_request_addr(reqport,pfh,&addr,protocol);
+  return ipacl_do_request_addr(reqport,pfh,&addr.sa,protocol);
 }
 
 /********************************************************************/
 
 int ipacl_do_request_addr(
-	const int                           reqport,
-	int                 *const restrict pfh,
-	const ipacl_addr__t *const restrict req,
-	const unsigned int                  protocol
+	const int                             reqport,
+	int                   *const restrict pfh,
+	const struct sockaddr *const restrict addr,
+	const unsigned int                    protocol
 )
 {
+  static const struct sockaddr_un devacl = 
+  {
+    .sun_family = AF_LOCAL,
+    .sun_path   = "/dev/ipacl"
+  };
+  
   ipaclraw__t     packet;
   ipaclrep__t     reply;
   struct pollfd   fdlist;
@@ -210,18 +232,19 @@ int ipacl_do_request_addr(
   
   assert(reqport  >= 0);
   assert(pfh      != NULL);
-  assert(req      != NULL);
+  assert(addr     != NULL);
   assert(protocol <= 65535u);
   
-  ipacl_encode(&packet,&size,req,protocol);  
+  encode(&packet,&size,addr,protocol);  
   bytes = sendto(
   		reqport,
   		&packet,
   		size,
   		0,
-  		(struct sockaddr *)&ipacl_port,
-  		sizeof(ipacl_port)
+  		(struct sockaddr *)&devacl,
+  		sizeof(struct sockaddr_un)
   	);
+  
   if (bytes < (ssize_t)size)
     return (bytes < 0) ? errno : EPROTO;
   
@@ -294,3 +317,42 @@ int ipacl_close(const int reqport)
 
 /******************************************************************/
 
+static int encode(
+	ipaclraw__t           *const restrict raw,
+	size_t                *const restrict rawsize,
+	const struct sockaddr *const restrict addr,
+	const unsigned int                    protocol
+)
+{
+  assert(raw      != NULL);
+  assert(rawsize  != NULL);
+  assert(addr     != NULL);
+  assert(protocol <= 65535u);
+  
+  switch(addr->sa_family)
+  {
+    case AF_INET:
+         raw->ipv4.family = IPACLF_IPv4;
+         raw->ipv4.proto  = protocol;
+         raw->ipv4.port   = ((addr__t *)addr)->sin.sin_port;
+         raw->ipv4.rsvp   = 0;
+         raw->ipv4.addr   = ((addr__t *)addr)->sin.sin_addr.s_addr;
+         *rawsize         = sizeof(ipaclraw_ipv4__t);
+         return 0;
+         
+    case AF_INET6:
+         raw->ipv6.family = IPACLF_IPv6;
+         raw->ipv6.proto  = protocol;
+         raw->ipv6.port   = ((addr__t *)addr)->sin6.sin6_port;
+         raw->ipv6.rsvp   = 0;
+         memcpy(raw->ipv6.addr,((addr__t *)addr)->sin6.sin6_addr.s6_addr,16);
+         *rawsize = sizeof(ipaclraw_ipv6__t);
+         return 0;
+         
+    default:
+         assert(0);
+         return EINVAL;
+  }  
+}
+
+/*************************************************************************/
