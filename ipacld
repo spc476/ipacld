@@ -42,6 +42,9 @@ end
 -- *********************************************************************
 
 function log_failure(point,remote,cred,addr,proto,err)
+  local addr  = addr or { family = '(unk)' , addr = '(unk)' , port = '(unk)'}
+  local proto = proto or 0
+
   syslog('err',string.format("failure: at=%q err=%q rem=%s uid=%s gid=%s family=%s addr=%s proto=%s port=%s",
 		point,
   		errno.strerror(err),
