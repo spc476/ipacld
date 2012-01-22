@@ -1,29 +1,10 @@
 #!/usr/local/bin/lua
 
-str    = require "org.conman.string"
-syslog = require "org.conman.syslog"
-net    = require "org.conman.net"
-fsys   = require "org.conman.fsys"
-unix   = require "org.conman.unix"
-errno  = require "org.conman.errno"
-proc   = require "org.conman.process"
-sig    = require "org.conman.process".sig
-         require "readacl"
-
-if not pcall(dofile,"/home/spc/source/daemon/acl/version.lua") then
-  VERSION = 0
-end
-
-syslog.open('ipacld','daemon')
-syslog('notice',"ipacld " .. VERSION .. " starting up")
-
-if arg[1] == nil then
-  dofile("ipacl.lua")
-else
-  dofile(arg[1])
-end
-
-local g_sock
+syslog  = require "org.conman.syslog"
+net     = require "org.conman.net"
+errno   = require "org.conman.errno"
+sig     = require "org.conman.process".sig
+ipacl_s = require "org.conman.net.ipacl_s"
 
 -- *********************************************************************
 
@@ -42,8 +23,10 @@ end
 -- *********************************************************************
 
 function log_failure(point,remote,cred,addr,proto,err)
-  local addr  = addr or { family = '(unk)' , addr = '(unk)' , port = '(unk)'}
-  local proto = proto or 0
+  local remote = remote or "(unknown)"
+  local cred   = cred   or { uid = '(unk)' , gid = '(unk)' , pid = 0 }
+  local addr   = addr   or { family = '(unk)' , addr = '(unk)' , port = '(unk)'}
+  local proto  = proto  or 0
 
   syslog('err',string.format("failure: at=%q err=%q rem=%s uid=%s gid=%s family=%s addr=%s proto=%s port=%s",
 		point,
@@ -60,81 +43,71 @@ end
 
 -- *********************************************************************
 
-function main()
+function main(req)
   local remote
-  local data
   local cred
-  local err
   local addr
-  local sock
   local proto
+  local sock
+  local err
+  local _
   
-  remote,data,cred,err = readcred(g_sock)
-  if err ~= 0 then
-    if err == errno.EINTR then
-      g_sock:close()
-      os.remove("/dev/ipacl")
-      os.exit(1)
-    end
-    syslog('crit',string.format("readcred() = %s",errno.strerror(err)))
-    return main()
-  end
-  
-  addr,proto,err = acl_decode(data)
-  if err ~= 0 then
-    log_failure('decode',remote,cred,addr,proto,err)
-    senderr(g_sock,remote,err)
-    return main()
-  end
-  
+  remote,cred,addr,proto,err = req:read()
   if request_okay(cred,addr,proto) then
     sock,err = net.socket(addr.family,proto)
     if err ~= 0 then
       log_failure('socket',remote,cred,addr,proto,err)
-      senderr(g_sock,remote,err)
-      return main()
+      req:send_err(remote,err)
+      return main(req)
     end
     
     _,err = sock:reuse()
     if err ~= 0 then
       log_failure('reuse',remote,cred,addr,proto,err)
-      senderr(g_sock,remote,err)
+      req:send_err(remote,err)
       sock:close()
-      return main()
+      return main(req)
     end
-
+    
     err = sock:bind(addr)
     if err == 0 then
       log_success(remote,cred,addr,proto)
-      sendfd(g_sock,remote,sock:fd())
+      req:send_fd(remote,sock:fd())
     else
       log_failure('bind',remote,cred,addr,proto,err)
-      senderr(g_sock,remote,err)
+      req:send_err(remote,err)
     end
     
     sock:close()
   else
     log_failure('request_okay',remote,cred,addr,proto,errno.EPERM)
-    senderr(g_sock,remote,errno.EPERM)
+    req:send_err(remote,errno.EPERM)
   end
   
-  return main()
+  return main(req)
 end
-      
--- *************************************************************************  
+
+-- *********************************************************************
+
+if not pcall(dofile,"/home/spc/source/daemon/acl/version.lua") then
+  VERSION = 0
+end
+
+syslog.open('ipacld','daemon')
+syslog('notice',"ipacld " .. VERSION .. " starting up")
+
+if arg[1] == nil then
+  dofile("ipacl.lua")
+else
+  dofile(arg[1])
+end
 
 sig.catch(sig.INT)
-fsys.umask("--x--x--x")
-os.remove("/dev/ipacl")
-laddr   = net.address("/dev/ipacl")
 
-g_sock,err  = net.socket('unix','udp')
+local sock,err = ipacl_s.open()
 if err ~= 0 then
-  print("socket()",errno.strerror(err))
+  syslog('err',string.format("ipacl_s.open() = %s",errno.strerror(err)))
   os.exit(1)
 end
 
-g_sock:bind(laddr)
-recvcred(g_sock)
-
-main()
+main(sock)
