@@ -2,17 +2,11 @@
 #ifndef IPACL_PROTO_H
 #define IPACL_PROTO_H
 
-typedef enum aclfamily
-{
-  IPACLF_IPv4,
-  IPACLF_IPv6,
-} aclfamily__t;
-
-	/*----------------------------------------------------------------
-	; NOTE: None of the fields need to be sent in network byte order,
-	; 	since the packets never go out the actual network, but to
-	; 	another process on the same system.
-	;----------------------------------------------------------------*/
+/***************************************************************************
+* NOTE: None of the fields need to be sent in network byte order, since the
+* 	packets never go out the actual network, but to another process on
+* 	the same system.
+***************************************************************************/
 
 #ifdef __SunOS
 #  pragma pack(1)
@@ -58,30 +52,6 @@ typedef struct ipaclrep
 #  pragma pack
 #endif
 
-typedef union ipacl_addr
-{
-  struct sockaddr     sa;
-  struct sockaddr_in  sin;
-  struct sockaddr_in6 sin6;
-} ipacl_addr__t;
-
 /**********************************************************************/
-
-extern const struct sockaddr_un ipacl_port;
-
-int ipacl_encode(
-		ipaclraw__t         *const restrict raw,
-		size_t              *const restrict rawsize,
-		const ipacl_addr__t *const restrict addr,
-		const unsigned int                  protocol
-	) __attribute__((nonnull,nothrow));
-	
-int ipacl_decode(
-		ipacl_addr__t     *const restrict addr,
-		size_t            *const restrict addrsize,
-		unsigned int      *const restrict pprotocol,
-		const ipaclraw__t *const restrict raw,
-		const size_t                      rawsize
-	) __attribute__((nonnull,nothrow));
 
 #endif

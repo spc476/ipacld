@@ -332,7 +332,7 @@ static int encode(
   switch(addr->sa_family)
   {
     case AF_INET:
-         raw->ipv4.family = IPACLF_IPv4;
+         raw->ipv4.family = AF_INET;
          raw->ipv4.proto  = protocol;
          raw->ipv4.port   = ((addr__t *)addr)->sin.sin_port;
          raw->ipv4.rsvp   = 0;
@@ -341,7 +341,7 @@ static int encode(
          return 0;
          
     case AF_INET6:
-         raw->ipv6.family = IPACLF_IPv6;
+         raw->ipv6.family = AF_INET6;
          raw->ipv6.proto  = protocol;
          raw->ipv6.port   = ((addr__t *)addr)->sin6.sin6_port;
          raw->ipv6.rsvp   = 0;
