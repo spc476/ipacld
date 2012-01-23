@@ -275,6 +275,9 @@ int ipacl_do_request_addr(
   if (rc < 1)
     return errno;
   
+  if (rc == 0)
+    return ETIMEDOUT;
+    
   memset(&msg    ,0,sizeof(msg));
   memset(&control,0,sizeof(control));
   memset(&iovec  ,0,sizeof(iovec));
