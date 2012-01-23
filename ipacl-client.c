@@ -272,7 +272,7 @@ int ipacl_do_request_addr(
   fdlist.events = POLLIN;
   fdlist.fd     = reqport;
   rc = poll(&fdlist,1,1000);
-  if (rc < 1)
+  if (rc < 0)
     return errno;
   
   if (rc == 0)
