@@ -329,24 +329,19 @@ static int encode(
   assert(addr     != NULL);
   assert(protocol <= 65535u);
   
+  raw->net.type     = IPACLT_IP;
+  raw->net.protocol = protocol;
+  
   switch(addr->sa_family)
   {
     case AF_INET:
-         raw->ipv4.family = AF_INET;
-         raw->ipv4.proto  = protocol;
-         raw->ipv4.port   = ((addr__t *)addr)->sin.sin_port;
-         raw->ipv4.rsvp   = 0;
-         raw->ipv4.addr   = ((addr__t *)addr)->sin.sin_addr.s_addr;
-         *rawsize         = sizeof(ipaclraw_ipv4__t);
+         *rawsize = sizeof(ipaclraw_ipv4__t);
+         memcpy(&raw->ipv4.sin,addr,sizeof(struct sockaddr_in));
          return 0;
          
     case AF_INET6:
-         raw->ipv6.family = AF_INET6;
-         raw->ipv6.proto  = protocol;
-         raw->ipv6.port   = ((addr__t *)addr)->sin6.sin6_port;
-         raw->ipv6.rsvp   = 0;
-         memcpy(raw->ipv6.addr,((addr__t *)addr)->sin6.sin6_addr.s6_addr,16);
          *rawsize = sizeof(ipaclraw_ipv6__t);
+         memcpy(&raw->ipv6.sin6,addr,sizeof(struct sockaddr_in6));
          return 0;
          
     default:

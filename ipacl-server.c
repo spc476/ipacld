@@ -255,33 +255,31 @@ static int decode(
   assert(pprotocol != NULL);
   assert(raw       != NULL);
 
-  switch(raw->head.family)
+  if (raw->head.type != IPACLT_IP)
+    return EINVAL;
+  
+  switch(raw->net.sa.sa_family)
   {
     case AF_INET:
          if (rawsize < sizeof(ipaclraw_ipv4__t))
            return EINVAL;
-         
-         *addrsize                              = sizeof(struct sockaddr_in);
-         *pprotocol                             = raw->ipv4.proto;
-         ((addr__t *)addr)->sin.sin_family      = AF_INET;
-         ((addr__t *)addr)->sin.sin_port        = raw->ipv4.port;
-         ((addr__t *)addr)->sin.sin_addr.s_addr = raw->ipv4.addr;
-         return 0;
-         
+         *addrsize = sizeof(struct sockaddr_in);
+         break;
     case AF_INET6:
          if (rawsize < sizeof(ipaclraw_ipv6__t))
            return EINVAL;
-         
-         *addrsize                           = sizeof(struct sockaddr_in6);
-         *pprotocol                          = raw->ipv6.proto;
-         ((addr__t *)addr)->sin6.sin6_family = AF_INET6;
-         ((addr__t *)addr)->sin6.sin6_port   = raw->ipv6.port;
-         memcpy(((addr__t *)addr)->sin6.sin6_addr.s6_addr,raw->ipv6.addr,16);
-         return 0;
-
+         *addrsize = sizeof(struct sockaddr_in6);
+         break;
     default:
          return EINVAL;
   }
+  
+  if (raw->net.protocol > 65535u)
+    return EINVAL;
+    
+  *pprotocol = raw->net.protocol;
+  memcpy(addr,&raw->net.sa,*addrsize);
+  return 0;
 }
 
 /**********************************************************************/
