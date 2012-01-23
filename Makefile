@@ -66,6 +66,6 @@ remove:
 	/bin/rm -rf $(LUALIB)/org/conman/net/ipacl.so
 	
 clean:
-	/bin/rm -rf *.so *~ *.o ipacltest
+	/bin/rm -rf *.so *~ *.o ipacltest ipaclsrv
 
 
