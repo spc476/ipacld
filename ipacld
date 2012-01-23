@@ -71,6 +71,7 @@ function main(req)
   if err ~= 0 then
     if err ~= errno.EINTR then
       syslog('err',string.format("req:read() = %s",errno.strerror(err)))
+      req:send_err(remote,err)
     end
     return main(req)
   end
