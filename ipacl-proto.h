@@ -62,7 +62,7 @@ typedef struct ipaclraw_ipv6
   struct sockaddr_in6 sin6;
 } ipaclraw_ipv6__t;
 
-typedef struct ipaclraw
+typedef union ipaclraw
 {
   ipaclraw_head__t head;
   ipaclraw_net__t  net;
