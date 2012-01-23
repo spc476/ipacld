@@ -179,7 +179,68 @@ static int ipacllua___tostring_c(lua_State *const L)
 
 static int ipacllua_do_request(lua_State *const L)
 {
-  return 0;
+  ipaclsock__t *sock;
+  int           fh;
+  int           rc;
+  
+  sock = luaL_checkudata(L,1,IPACL_SOCK);
+  
+  if (lua_isuserdata(L,2))
+  {
+    sockaddr_all__t *addr = luaL_checkudata(L,2,NET_ADDR);
+    
+    if ((addr->sa.sa_family != AF_INET) && (addr->sa.sa_family != AF_INET6))
+      return luaL_error(L,"incorrect parameter type");
+    
+    if (lua_isnumber(L,3))
+    {
+      unsigned int proto = lua_tonumber(L,3);
+      rc = ipacl_do_request_addr(sock->fh,&fh,&addr->sa,proto);
+    }
+    else if (lua_isstring(L,3))
+    {
+      struct protoent *e = getprotobyname(lua_tostring(L,2));
+      if (e == NULL)
+      {
+        lua_pushnil(L);
+        lua_pushinteger(L,ENOPROTOOPT);
+        return 2;
+      }
+      rc = ipacl_do_request_addr(sock->fh,&fh,&addr->sa,e->p_proto);
+    }
+    else
+      return luaL_error(L,"incorrect parameter type");
+  }
+  
+  else if (lua_isstring(L,2))
+  {
+    const char *ip = lua_tostring(L,2);
+    
+    if (lua_isnumber(L,3) && lua_isnumber(L,4))
+    {
+      unsigned int proto = lua_tonumber(L,3);
+      unsigned int port  = lua_tonumber(L,4);
+      rc = ipacl_do_request(sock->fh,&fh,ip,proto,port);
+    }
+    else if (lua_isstring(L,3) && lua_isstring(L,4))
+    {
+      const char *proto = lua_tostring(L,3);
+      const char *port  = lua_tostring(L,4);
+      rc = ipacl_do_request_s(sock->fh,&fh,ip,proto,port);
+    }
+    else
+      return luaL_error(L,"incorrect parameter types");
+  }
+  else
+    return luaL_error(L,"incorrect parameter type");
+  
+  if (rc == 0)
+    lua_pushinteger(L,fh);
+  else
+    lua_pushnil(L);
+  
+  lua_pushinteger(L,rc);
+  return 2;
 }
 
 /************************************************************************/
