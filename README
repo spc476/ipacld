@@ -15,7 +15,7 @@ Known limitations at this point:
 	* only Lua 5.1 is supported
 	* only runs in the foreground (but there's a reason for this)
 
-This is more of a proof-of-concept at this stage, but it work, and I'm
+This is more of a proof-of-concept at this stage, but it works, and I'm
 surprised that nothing like this hasn't already been written.  What an odd
 omission.
 
@@ -24,4 +24,3 @@ You'll need to install the Conman Lua packages, available at
 	https://github.com/spc476/lua-conmanorg
 
 Anyway, check ipacl.lua to see how this work.
-
