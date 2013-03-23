@@ -58,7 +58,7 @@ static int decode(
 		struct sockaddr   *const restrict addr,
 		size_t            *const restrict addrsize,
 		unsigned int      *const restrict pprotocol,
-		const ipaclraw__t *const restrict raw,
+		const ipaclreq__t *const restrict raw,
 		const size_t                      rawsize
 	) __attribute__((nonnull,nothrow));
 
@@ -121,7 +121,7 @@ int ipacls_read_request(
   struct msghdr   msg;
   struct cmsghdr *cmsg;
   struct iovec    iovec;
-  ipaclraw__t     packet;
+  ipaclreq__t     packet;
   ssize_t         bytes;
   size_t          dummy;
   union
@@ -267,7 +267,7 @@ static int decode(
 	struct sockaddr   *const restrict addr,
 	size_t		  *const restrict addrsize,
 	unsigned int      *const restrict pprotocol,
-	const ipaclraw__t *const restrict raw,
+	const ipaclreq__t *const restrict raw,
 	const size_t                      rawsize
 )
 {
@@ -282,12 +282,12 @@ static int decode(
   switch(raw->net.sa.sa_family)
   {
     case AF_INET:
-         if (rawsize < sizeof(ipaclraw_ipv4__t))
+         if (rawsize < sizeof(ipacl_ipv4__t))
            return EINVAL;
          *addrsize = sizeof(struct sockaddr_in);
          break;
     case AF_INET6:
-         if (rawsize < sizeof(ipaclraw_ipv6__t))
+         if (rawsize < sizeof(ipacl_ipv6__t))
            return EINVAL;
          *addrsize = sizeof(struct sockaddr_in6);
          break;

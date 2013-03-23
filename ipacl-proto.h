@@ -41,29 +41,29 @@ typedef struct
   ipacl_type__t   type;
   unsigned int    protocol;
   struct sockaddr sa;
-} ipaclraw_net__t;
+} ipacl_net__t;
 
 typedef struct
 {
   ipacl_type__t      type;
   unsigned int       protocol;
   struct sockaddr_in sin;
-} ipaclraw_ipv4__t;
+} ipacl_ipv4__t;
 
 typedef struct
 {
   ipacl_type__t       type;
   unsigned int        protocol;
   struct sockaddr_in6 sin6;
-} ipaclraw_ipv6__t;
+} ipacl_ipv6__t;
 
 typedef union
 {
   ipacl_type__t type;
-  ipaclraw_net__t  net;
-  ipaclraw_ipv4__t ipv4;
-  ipaclraw_ipv6__t ipv6;
-} ipaclraw__t;
+  ipacl_net__t  net;
+  ipacl_ipv4__t ipv4;
+  ipacl_ipv6__t ipv6;
+} ipaclreq__t;
 
 typedef struct
 {
