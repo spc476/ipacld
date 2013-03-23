@@ -49,7 +49,7 @@ typedef union
 /*************************************************************************/
 
 static int encode(
-		ipaclraw__t           *const restrict raw,
+		ipaclreq__t           *const restrict raw,
 		size_t                *const restrict rawsize,
 		const struct sockaddr *const restrict addr,
 		const unsigned int                    protocol
@@ -236,7 +236,7 @@ int ipacl_do_request_addr(
     .sun_path   = "/dev/ipacl"
   };
   
-  ipaclraw__t     packet;
+  ipaclreq__t     packet;
   ipaclrep__t     reply;
   struct pollfd   fdlist;
   struct msghdr   msg;
@@ -342,7 +342,7 @@ int ipacl_close(const int reqport)
 /******************************************************************/
 
 static int encode(
-	ipaclraw__t           *const restrict raw,
+	ipaclreq__t           *const restrict raw,
 	size_t                *const restrict rawsize,
 	const struct sockaddr *const restrict addr,
 	const unsigned int                    protocol
@@ -359,12 +359,12 @@ static int encode(
   switch(addr->sa_family)
   {
     case AF_INET:
-         *rawsize = sizeof(ipaclraw_ipv4__t);
+         *rawsize = sizeof(ipacl_ipv4__t);
          memcpy(&raw->ipv4.sin,addr,sizeof(struct sockaddr_in));
          return 0;
          
     case AF_INET6:
-         *rawsize = sizeof(ipaclraw_ipv6__t);
+         *rawsize = sizeof(ipacl_ipv6__t);
          memcpy(&raw->ipv6.sin6,addr,sizeof(struct sockaddr_in6));
          return 0;
          
