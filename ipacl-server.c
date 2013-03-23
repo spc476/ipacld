@@ -276,7 +276,7 @@ static int decode(
   assert(pprotocol != NULL);
   assert(raw       != NULL);
 
-  if (raw->head.type != IPACLT_IP)
+  if (raw->type != IPACLT_IP)
     return EINVAL;
   
   switch(raw->net.sa.sa_family)

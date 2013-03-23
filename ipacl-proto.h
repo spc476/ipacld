@@ -38,11 +38,6 @@ typedef enum
 
 typedef struct
 {
-  ipacl_type__t type;
-} ipaclraw_head__t;
-
-typedef struct
-{
   ipacl_type__t   type;
   unsigned int    protocol;
   struct sockaddr sa;
@@ -64,7 +59,7 @@ typedef struct
 
 typedef union
 {
-  ipaclraw_head__t head;
+  ipacl_type__t type;
   ipaclraw_net__t  net;
   ipaclraw_ipv4__t ipv4;
   ipaclraw_ipv6__t ipv6;
