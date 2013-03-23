@@ -31,38 +31,38 @@
 * 	protocol quite a bit.
 ***************************************************************************/
 
-typedef enum ipacl_type
+typedef enum
 {
   IPACLT_IP
 } ipacl_type__t;
 
-typedef struct ipaclraw_head
+typedef struct
 {
   ipacl_type__t type;
 } ipaclraw_head__t;
 
-typedef struct ipaclraw_net
+typedef struct
 {
   ipacl_type__t   type;
   unsigned int    protocol;
   struct sockaddr sa;
 } ipaclraw_net__t;
 
-typedef struct ipaclraw_ipv4
+typedef struct
 {
   ipacl_type__t      type;
   unsigned int       protocol;
   struct sockaddr_in sin;
 } ipaclraw_ipv4__t;
 
-typedef struct ipaclraw_ipv6
+typedef struct
 {
   ipacl_type__t       type;
   unsigned int        protocol;
   struct sockaddr_in6 sin6;
 } ipaclraw_ipv6__t;
 
-typedef union ipaclraw
+typedef union
 {
   ipaclraw_head__t head;
   ipaclraw_net__t  net;
@@ -70,7 +70,7 @@ typedef union ipaclraw
   ipaclraw_ipv6__t ipv6;
 } ipaclraw__t;
 
-typedef struct ipaclrep
+typedef struct
 {
   int err;
 } ipaclrep__t;
