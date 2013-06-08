@@ -48,8 +48,8 @@
 #include "ipacl-proto.h"
 #include "ipacl.h"
 
-#define IPACL_SOCK	"ipacl:sock"
-#define NET_ADDR        "net:addr"
+#define IPACL_SOCK	"org.conman.net.ipacl:sock"
+#define NET_ADDR        "org.conman.net:addr"
 
 /**********************************************************************/
 

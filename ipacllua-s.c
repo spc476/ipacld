@@ -48,9 +48,9 @@
 #include "ipacl-proto.h"
 #include "ipacl-server.h"
 
-#define IPACL_SERVER	"ipacl:server"
-#define NET_SOCK	"net:sock"
-#define NET_ADDR        "net:addr"
+#define IPACL_SERVER	"org.conman.net.ipacl:server"
+#define NET_SOCK	"org.conman.net:sock"
+#define NET_ADDR        "org.conman.net:addr"
 
 /**********************************************************************/
 
