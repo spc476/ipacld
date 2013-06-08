@@ -30,7 +30,7 @@ ipacl_s = require "org.conman.net.ipacl_s"
 -- *********************************************************************
 
 function log_success(remote,cred,addr,proto)
-  syslog('notice',string.format("success: rem=%s uid=%s gid=%s family=%s addr=%s proto=%s port=%s",
+  syslog('notice',"success: rem=%s uid=%s gid=%s family=%s addr=%s proto=%s port=%s",
   		tostring(remote),
       		cred.uid,
       		cred.gid,
@@ -38,7 +38,7 @@ function log_success(remote,cred,addr,proto)
       		addr.addr,
 		proto,
       		addr.port
-      		))      		
+      	)      		
 end
 
 -- *********************************************************************
@@ -49,9 +49,9 @@ function log_failure(point,remote,cred,addr,proto,err)
   local addr   = addr   or { family = '(unk)' , addr = '(unk)' , port = '(unk)'}
   local proto  = proto  or 0
 
-  syslog('err',string.format("failure: at=%q err=%q rem=%s uid=%s gid=%s family=%s addr=%s proto=%s port=%s",
+  syslog('err',"failure: at=%q err=%q rem=%s uid=%s gid=%s family=%s addr=%s proto=%s port=%s",
 		point,
-  		errno.strerror(err),
+  		errno[err],
   		tostring(remote),
       		cred.uid,
       		cred.gid,
@@ -59,7 +59,7 @@ function log_failure(point,remote,cred,addr,proto,err)
       		addr.addr,
 		proto,
       		addr.port
-      		))
+      	)
 end
 
 -- *********************************************************************
@@ -90,7 +90,7 @@ function main(req)
   
   if err ~= 0 then
     if err ~= errno.EINTR then
-      syslog('err',string.format("req:read() = %s",errno.strerror(err)))
+      syslog('err',"req:read() = %s",errno[err])
       if remote then req:send_err(remote,err) end
     end
     return main(req)
@@ -104,13 +104,7 @@ function main(req)
       return main(req)
     end
     
-    _,err = sock:reuse()
-    if err ~= 0 then
-      log_failure('reuse',remote,cred,addr,proto,err)
-      req:send_err(remote,err)
-      sock:close()
-      return main(req)
-    end
+    sock.reuseaddr = true
     
     err = sock:bind(addr)
     if err == 0 then
@@ -150,7 +144,7 @@ sig.catch(sig.TERM)
 
 local sock,err = ipacl_s.open()
 if err ~= 0 then
-  syslog('err',string.format("ipacl_s.open() = %s",errno.strerror(err)))
+  syslog('err',"ipacl_s.open() = %s",errno[err])
   os.exit(1)
 end
 
