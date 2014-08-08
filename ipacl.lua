@@ -19,12 +19,13 @@
 --
 -- ********************************************************************
 
+local syslog = require "org.conman.syslog"
 local unix = require "org.conman.unix"
 local net  = require "org.conman.net"
 local fsys = require "org.conman.fsys"
 
-local function A(addr,port,proto)
-  return tostring(net.address(addr,port,proto))
+local function A(addr,proto,port)
+  return tostring(net.address(addr,proto,port))
 end
 
 -- *****************************************************************
@@ -33,29 +34,42 @@ local users =
 {
   gopher = 
   { 
-    [A('0.0.0.0'	,'gopher','tcp')] = true ,
-    [A('192.168.1.10'	,'gopher','tcp')] = true
+    [A('0.0.0.0'	, 'tcp' , 'gopher')] = true ,
+    [A('192.168.1.10'	, 'tcp' , 'gopher')] = true
   },
   
   tftp =
   {
-    [A('0.0.0.0'	, 'tftp','udp')] = true ,
-    [A('192.168.1.10'	, 'tftp','udp')] = true
+    [A('0.0.0.0'	, 'udp' , 'tftp')] = true ,
+    [A('192.168.1.10'	, 'udp' , 'tftp')] = true
   },
   
   ntp =
   {
-    [A('0.0.0.0' , 'daytime' , 'udp')] = true,
-    [A('0.0.0.0' , 'daytime' , 'tcp')] = true
+    [A('0.0.0.0'	, 'udp' , 'daytime')] = true,
+    [A('0.0.0.0'	, 'tcp' , 'daytime')] = true
   },
   
   nobody =
   {
-    [A('0.0.0.0','finger','tcp')] = true,
+    [A('0.0.0.0'	, 'tcp' , 'finger')] = true,
   }
 }  
 
 -- *************************************************************
+
+for user,aclist in pairs(users) do
+  for addr,acl in pairs(aclist) do
+    syslog(
+    	"debug",
+    	"user=%s addr=%s allow=%s",
+    	user,
+    	addr,
+    	tostring(acl)
+    )
+  end
+end
+
 
 function request_okay(cred,addr,proto)
 
@@ -88,5 +102,6 @@ function request_okay(cred,addr,proto)
     return false
   end
   
+  syslog('debug',"uname=%s addr=%s value=%s",uname,tostring(addr),tostring(users[uname][tostring(addr)]))
   return users[uname][tostring(addr)]
 end
